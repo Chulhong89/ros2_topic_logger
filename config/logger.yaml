@@ -1,0 +1,29 @@
+root_dir: ./logs
+max_total_size_mb: 5120
+max_age_days: 7
+
+topics:
+  - topic: /imu/data
+    type: sensor_msgs/msg/Imu
+    mode: periodic
+    min_period_ms: 50
+    max_file_size_mb: 100
+
+  - topic: /odom
+    type: nav_msgs/msg/Odometry
+    mode: always
+    max_file_size_mb: 100
+
+  - topic: /goal_pose
+    type: geometry_msgs/msg/PoseStamped
+    mode: always
+    max_file_size_mb: 50
+
+  - topic: /scan
+    type: sensor_msgs/msg/LaserScan
+    mode: event_window
+    is_large_data: true
+    trigger_distance_threshold: 1.0
+    pre_buffer_sec: 3.0
+    post_buffer_sec: 5.0
+    max_file_size_mb: 200
