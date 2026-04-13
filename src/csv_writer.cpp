@@ -96,6 +96,7 @@ void CsvWriter::open_if_needed(double recv_time)
       throw std::runtime_error("Failed to open log file: " + current_path_.string());
     }
     stream_ << header_ << '\n';
+    stream_.flush();
   }
 }
 
@@ -115,13 +116,15 @@ void CsvWriter::rotate_if_needed(double recv_time)
       throw std::runtime_error("Failed to rotate log file: " + current_path_.string());
     }
     stream_ << header_ << '\n';
+    stream_.flush();
   }
 }
 
-void CsvWriter::write_row(double recv_time, const std::string & row)
+void CsvWriter::write_row(double file_time, const std::string & row)
 {
-  rotate_if_needed(recv_time);
+  rotate_if_needed(file_time);
   stream_ << row << '\n';
+  stream_.flush();
 }
 
 }  // namespace ros2_topic_logger

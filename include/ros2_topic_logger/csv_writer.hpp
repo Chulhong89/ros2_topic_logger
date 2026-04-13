@@ -17,7 +17,7 @@ public:
     std::size_t max_file_size_bytes,
     bool event_file = false);
 
-  void write_row(double recv_time, const std::string & row);
+  void write_row(double file_time, const std::string & row);
 
 private:
   std::filesystem::path build_directory(double recv_time) const;

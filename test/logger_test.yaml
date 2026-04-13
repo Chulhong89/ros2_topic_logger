@@ -1,0 +1,28 @@
+root_dir: /tmp/ros2_logger_integration_test
+max_total_size_mb: 100
+max_age_days: 7
+
+topics:
+  - topic: /test/imu
+    type: sensor_msgs/msg/Imu
+    mode: always
+    max_file_size_mb: 10
+
+  - topic: /test/odom
+    type: nav_msgs/msg/Odometry
+    mode: periodic
+    min_period_ms: 100
+    max_file_size_mb: 10
+
+  - topic: /test/pose
+    type: geometry_msgs/msg/PoseStamped
+    mode: always
+    max_file_size_mb: 10
+
+  - topic: /test/scan
+    type: sensor_msgs/msg/LaserScan
+    mode: event_window
+    trigger_distance_threshold: 1.0
+    pre_buffer_sec: 1.0
+    post_buffer_sec: 1.0
+    max_file_size_mb: 10

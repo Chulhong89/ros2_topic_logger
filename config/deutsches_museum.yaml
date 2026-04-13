@@ -1,0 +1,9 @@
+root_dir: /tmp/ros2_logger_deutsches_museum
+max_total_size_mb: 5120
+max_age_days: 7
+
+topics:
+  - topic: /imu
+    type: sensor_msgs/msg/Imu
+    mode: always
+    max_file_size_mb: 200

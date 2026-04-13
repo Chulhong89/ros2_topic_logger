@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -13,6 +14,7 @@
 
 #include "ros2_topic_logger/csv_writer.hpp"
 #include "ros2_topic_logger/event_buffer.hpp"
+#include "ros2_topic_logger/message_serializers.hpp"
 #include "ros2_topic_logger/retention_manager.hpp"
 #include "ros2_topic_logger/topic_config.hpp"
 
@@ -25,15 +27,28 @@ public:
   explicit TopicLoggerNode(const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
 
 private:
-  void load_config(const std::string & config_path);
-  void create_subscriptions();
-  void create_imu_subscription(const TopicConfig & config);
-  void create_odom_subscription(const TopicConfig & config);
-  void create_pose_subscription(const TopicConfig & config);
-  void create_laserscan_subscription(const TopicConfig & config);
+  // EVENT_WINDOW 모드의 런타임 상태. 메시지 타입과 무관하게 공용으로 사용.
+  struct EventState
+  {
+    bool active{false};
+    double end_time_sec{0.0};
+    std::shared_ptr<CsvWriter> writer;
+  };
 
-  double now_sec() const;
-  bool should_log_periodic(const std::string & topic_name, double current_time);
+  void load_config(const std::string & config_path);
+  void register_types();
+  void create_subscriptions();
+
+  // 새 메시지 타입을 추가할 때 register_types() 에서 이 함수를 호출합니다.
+  // trigger: EVENT_WINDOW 트리거 조건. ALWAYS/PERIODIC 타입은 nullptr로 전달.
+  template<typename MsgT>
+  void create_subscription_impl(
+    const TopicConfig & config,
+    const rclcpp::QoS & qos,
+    std::function<bool(const MsgT &, const TopicConfig &)> trigger = nullptr);
+
+  double now_sec();
+  bool should_log_periodic(const std::string & topic_key, double current_time);
   void on_retention_timer();
 
   GlobalConfig global_config_;
@@ -42,16 +57,13 @@ private:
   rclcpp::TimerBase::SharedPtr retention_timer_;
 
   std::unordered_map<std::string, double> last_log_time_sec_;
+  std::unordered_map<std::string, double> min_period_sec_;   // PERIODIC 판단용 캐시
   std::vector<rclcpp::SubscriptionBase::SharedPtr> subscriptions_;
   std::unordered_map<std::string, std::shared_ptr<CsvWriter>> writers_;
+  std::unordered_map<std::string, EventState> event_states_;
 
-  // LaserScan event mode state.
-  std::unordered_map<std::string, std::shared_ptr<CsvWriter>> event_writers_;
-  std::unordered_map<std::string, EventBuffer<sensor_msgs::msg::LaserScan>> scan_buffers_;
-  std::unordered_map<std::string, bool> event_active_;
-  std::unordered_map<std::string, double> event_end_time_sec_;
-  std::unordered_map<std::string, std::string> scan_headers_;
-  std::unordered_map<std::string, std::size_t> scan_max_file_sizes_;
+  using SubscriptionFactory = std::function<void(const TopicConfig &)>;
+  std::unordered_map<std::string, SubscriptionFactory> type_registry_;
 };
 
 }  // namespace ros2_topic_logger
